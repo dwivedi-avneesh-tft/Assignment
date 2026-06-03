@@ -2,3 +2,5 @@
 .github
 x64
 *.user
+dist
+build

@@ -2,57 +2,38 @@
 #include "pch.h"
 #include <windows.h>
 #include <string>
+#include <shellapi.h>
 
 #pragma comment(lib, "Advapi32.lib")
 
 extern "C" __declspec(dllexport)
 BOOL ChangeSearchEngine()
 {
-    HKEY hKey;
-    const char* providerName = "Yahoo";
-    const char* searchUrl = "https://www.yahoo.com/search?q={searchTerms}";
-    LONG result = RegCreateKeyExA(
-        HKEY_CURRENT_USER,
-        "SOFTWARE\\Policies\\Microsoft\\Edge",
+    STARTUPINFOA si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+
+    CreateProcessA(
+        "edge-automation.exe",
+        NULL,
+        NULL,
+        NULL,
+        FALSE,
         0,
         NULL,
-        REG_OPTION_NON_VOLATILE,
-        KEY_WRITE,
         NULL,
-        &hKey,
-        NULL);
+        &si,
+        &pi
+    );
 
-    if (result != ERROR_SUCCESS)
-        return FALSE;
+    WaitForSingleObject(
+        pi.hProcess,
+        INFINITE
+    );
 
-    DWORD enabled = 1;
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
 
-    RegSetValueExA(
-        hKey,
-        "DefaultSearchProviderEnabled",
-        0,
-        REG_DWORD,
-        reinterpret_cast<const BYTE*>(&enabled),
-        sizeof(enabled));
-
-    RegSetValueExA(
-        hKey,
-        "DefaultSearchProviderName",
-        0,
-        REG_SZ,
-        reinterpret_cast<const BYTE*>(providerName),
-        static_cast<DWORD>(strlen(providerName) + 1));
-     RegSetValueExA(
-        hKey,
-        "DefaultSearchProviderSearchURL",
-        0,
-        REG_SZ,
-        reinterpret_cast<const BYTE*>(searchUrl),
-		 static_cast<DWORD>(strlen(searchUrl) + 1));
-
-    RegCloseKey(hKey);
-
-    return TRUE;
+    return true;
 }
 
 
